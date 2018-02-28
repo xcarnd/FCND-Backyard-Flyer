@@ -16,10 +16,12 @@ class States(Enum):
     WAYPOINT = 3
     LANDING = 4
     DISARMING = 5
-
+    
 
 class BackyardFlyer(Drone):
-
+    
+    SMALL_ENOUGH = 0.1
+    
     def __init__(self, connection):
         super().__init__(connection)
         self.target_position = np.array([0.0, 0.0, 0.0])
@@ -35,42 +37,36 @@ class BackyardFlyer(Drone):
         self.register_callback(MsgID.LOCAL_POSITION, self.local_position_callback)
         self.register_callback(MsgID.LOCAL_VELOCITY, self.velocity_callback)
         self.register_callback(MsgID.STATE, self.state_callback)
-
+        
     def local_position_callback(self):
         """
-        TODO: Implement this method
-
         This triggers when `MsgID.LOCAL_POSITION` is received and self.local_position contains new data
         """
         if self.flight_state == States.TAKEOFF:
             altitude = -1.0 * self.local_position[2]
-            if abs(altitude - self.target_position[2]) < 0.1:
+            if abs(altitude - self.target_position[2]) < BackyardFlyer.SMALL_ENOUGH:
                 self.waypoint_transition()
         elif self.flight_state == States.LANDING:
             altitude = -1.0 * self.local_position[2]
-            if abs(altitude) < 0.1:
+            if abs(altitude) < BackyardFlyer.SMALL_ENOUGH:
                 self.disarming_transition()
 
     def velocity_callback(self):
         """
-        TODO: Implement this method
-
         This triggers when `MsgID.LOCAL_VELOCITY` is received and self.local_velocity contains new data
         """
         if self.flight_state == States.WAYPOINT:
             v = (self.local_velocity[0] ** 2 + self.local_velocity[1] ** 2 + self.local_velocity[2] ** 2) ** 0.5
-            if self.has_reach_waypoint(self.next_waypoint_idx) and v < 0.2:
+            if self.has_reach_waypoint(self.next_waypoint_idx) and v < BackyardFlyer.SMALL_ENOUGH:
                 self.waypoint_transition()
 
     def has_reach_waypoint(self, idx):
         wp_n, wp_e = self.all_waypoints[idx]
         dist = ((self.local_position[0] - wp_n) ** 2 + (self.local_position[1] - wp_e) ** 2) ** 0.5
-        return dist < 0.2
+        return dist < BackyardFlyer.SMALL_ENOUGH
 
     def state_callback(self):
         """
-        TODO: Implement this method
-
         This triggers when `MsgID.STATE` is received and self.armed and self.guided contain new data
         """
         if self.flight_state == States.MANUAL:
@@ -81,8 +77,7 @@ class BackyardFlyer(Drone):
             self.manual_transition()
 
     def calculate_box(self):
-        """TODO: Fill out this method
-        
+        """
         1. Return waypoints to fly a box
         """
         # how about fly a box counter-clockwise?
@@ -121,6 +116,7 @@ class BackyardFlyer(Drone):
             self.next_waypoint_idx = 0
             self.flight_state = States.WAYPOINT
         next_wp_north, next_wp_east = self.all_waypoints[self.next_waypoint_idx]
+        print("Next waypoint: {}, {}".format(next_wp_north, next_wp_east))
         self.cmd_position(next_wp_north, next_wp_east, self.target_position[2], 0)
 
     def landing_transition(self):
@@ -129,8 +125,7 @@ class BackyardFlyer(Drone):
         self.flight_state = States.LANDING
 
     def disarming_transition(self):
-        """TODO: Fill out this method
-        
+        """
         1. Command the drone to disarm
         2. Transition to the DISARMING state
         """
