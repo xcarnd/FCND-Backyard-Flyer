@@ -21,8 +21,6 @@ Manual control of the drone is done using the instructions found with the simula
 
 Autonomous control will be done using an event-driven state machine. First, you will need to fill in the appropriate callbacks. Each callback will check against transition criteria dependent on the current state. If the transition criteria are met, it will transition to the next state and pass along any required commands to the drone.
 
-Telemetry data from the drone is logged for review after the flight. You will use the logs to plot the trajectory of the drone and analyze the performance of the task. For more information check out the Flight Log section below...
-
 ## Drone API
 
 To communicate with the simulator (and a real drone), you will be using the [UdaciDrone API](https://udacity.github.io/udacidrone/).  This API handles all the communication between Python and the drone simulator.  A key element of the API is the `Drone` superclass that contains the commands to be passed to the simulator and allows you to register callbacks/listeners on changes to the drone's attributes.  The goal of this project is to design a subclass from the Drone class implementing a state machine to autonomously fly a box. A subclass is started for you in `backyard_flyer.py`
@@ -113,9 +111,11 @@ To stop logging data, stop the simulator first and the script will automatically
 Alternatively, the drone can be manually started/stopped from a python/ipython shell:
 
 ```python
-from drone import Drone
-drone = Drone()
-drone.start(threaded=True, tlog_name="TLog-manual.txt")
+from udacidrone import Drone
+from udacidrone.connection import MavlinkConnection
+conn = MavlinkConnection('tcp:127.0.0.1:5760', threaded=False)
+drone = Drone(conn,tlog_name="TLog-manual.txt")
+drone.start()
 ```
 
 If `threaded` is set to `False`, the code will block and the drone logging can only be stopped by terminating the simulation. If the connection is threaded, the drone can be commanded using the commands described above, and the connection can be stopped (and the log properly closed) using:
@@ -210,12 +210,6 @@ def global_to_local(global_position, global_home):
 ## Submission Requirements
 
 * Filled in backyard_flyer.py
-
-* An x-y (East-North or Long-Lat) plot of the drone trajectory while manually flying the box
-
-* An x-y (East-North or Long-Lat) plot of the drone trajectory from autonomously flying the box
-
-* A short write-up (.md or .pdf)
 
 
 
